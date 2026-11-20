@@ -39,15 +39,16 @@
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>학생 모드 전환</span>
                 </button>
+                <!-- 앱스 스크립트 주소 설정 버튼 -->
+                <button onclick="toggleApiModal(true)" class="teacher-only px-3 py-1.5 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg transition-all flex items-center gap-1.5 border border-slate-700" title="구글 시트 연동 URL 설정">
+                    <i class="fa-solid fa-link"></i>
+                    <span class="hidden md:inline">시트 주소 설정</span>
+                </button>
                 <!-- 이전 기록 버튼 -->
                 <button id="btn-open-history" class="teacher-only px-3 py-1.5 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg transition-all flex items-center gap-1.5 border border-slate-700">
                     <i class="fa-solid fa-clock-rotate-left"></i>
                     <span class="hidden sm:inline">이전 기록</span>
                     <span id="history-count" class="bg-indigo-600 text-white text-xs px-1.5 py-0.2 rounded-full font-bold ml-0.5">0</span>
-                </button>
-                <!-- 시트 연동 URL 설정 버튼 -->
-                <button onclick="toggleApiUrlModal(true)" class="teacher-only px-2.5 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all border border-slate-700" title="구글 앱스 스크립트 웹 앱 주소 설정">
-                    <i class="fa-solid fa-link"></i>
                 </button>
             </div>
         </div>
@@ -424,6 +425,7 @@
                         <p class="text-xs text-slate-500 mt-1">승리한 팀 또는 학생 박스를 클릭하면 다음 라운드로 자동 진출합니다.</p>
                     </div>
                     
+                    <!-- 팀전 / 개인전 전환 스위치 (교사 모드 전용) -->
                     <div class="teacher-only inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 self-start">
                         <button id="btn-tourney-mode-TEAM" onclick="switchTournamentMode('TEAM')" class="px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-people-group"></i> 팀전 대진표
@@ -433,6 +435,7 @@
                         </button>
                     </div>
 
+                    <!-- 학생 모드 전용 우측 버튼 -->
                     <div id="tourney-student-actions" class="hidden flex items-center gap-2">
                         <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
                             <i class="fa-solid fa-lock text-slate-400 mr-1"></i> 대진표 수정 잠금됨
@@ -513,6 +516,26 @@
 
     </main>
 
+    <!-- Modal: API URL 설정 (깃허브 연동용) -->
+    <div id="modal-api" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-link text-indigo-600"></i> 구글 앱스 스크립트 웹 앱 URL 설정
+                </h3>
+                <button onclick="toggleApiModal(false)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+                구글 시트의 <b>[확장 프로그램] ➔ [Apps Script] ➔ [배포]</b>에서 발급받은 <b>웹 앱 URL</b>(`https://script.google.com/macros/s/.../exec`)을 입력해 주세요.
+            </p>
+            <input type="url" id="input-gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full text-xs px-3 py-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono">
+            <div class="mt-5 flex justify-end gap-2">
+                <button onclick="toggleApiModal(false)" class="px-4 py-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded-lg">취소</button>
+                <button onclick="saveGasUrlFromModal()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">저장 및 시트 연결</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Add Student -->
     <div id="modal-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
@@ -577,24 +600,6 @@
         </div>
     </div>
 
-    <!-- Modal: Apps Script  Config -->
-    <div id="modal-api-" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-link text-indigo-600"></i> 구글 시트 연동  설정
-                </h3>
-                <button onclick="toggleApiModal(false)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <p class="text-xs text-slate-500 mb-3">구글 앱스 스크립트에서 [새 배포] 후 발급받은 웹 앱 URL을 입력해 주세요.</p>
-            <input type="url" id="input-api-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full text-xs px-3 py-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono">
-            <div class="mt-4 flex justify-end gap-2">
-                <button onclick="toggleApiUrlModal(false)" class="px-4 py-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded-lg">취소</button>
-                <button onclick="saveApiUrl()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">저장 및 불러오기</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Notification Toast -->
     <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
         <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
@@ -603,38 +608,37 @@
 
     <script>
         // =========================================================================
-        // ★ 여기에 구글 앱스 스크립트에서 발급받은 웹 앱 주소를 붙여넣으세요!
+        // ★ 여기에 구글 앱스 스크립트 웹 앱 주소(.../exec)를 붙여넣으세요!
         // =========================================================================
-        const DEFAULT_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTamjasxtp68aOELZpKJjwMRgRtYEVWHeXhzccvE3ODY7ue3CPoK7QOlqyaY9G8UX1/exec";
-        // =========================================================================
+        const DEFAULT_GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyERFvyIN3TC1Y5bUfQKEIdsGknEC_L27nrVqzLGTfkHAGM-aW8ehqTomKdw0Duv5sy/exec";
 
-        const API_URL_STORAGE_KEY = 'pe_apps_script_api_url';
+        const GAS_URL_STORAGE_KEY = 'pe_gas_webapp_url';
         const LOCAL_SHAPES_KEY = 'pe_shape_skills_save';
 
-        function getApiUrl() {
-            const saved = localStorage.getItem(API_URL_STORAGE_KEY);
+        function getGasUrl() {
+            const saved = localStorage.getItem(GAS_URL_STORAGE_KEY);
             if (saved && saved.startsWith('http')) return saved;
-            if (DEFAULT_APPS_SCRIPT_URL && DEFAULT_APPS_SCRIPT_URL.startsWith('http')) return DEFAULT_APPS_SCRIPT_URL;
+            if (DEFAULT_GAS_WEB_APP_URL && DEFAULT_GAS_WEB_APP_URL.startsWith('http')) return DEFAULT_GAS_WEB_APP_URL;
             return '';
         }
 
-        function toggleApiUrlModal(show) {
-            const modal = document.getElementById('modal-api-url');
+        function toggleApiModal(show) {
+            const modal = document.getElementById('modal-api');
             modal.classList.toggle('hidden', !show);
             if (show) {
-                document.getElementById('input-api-url').value = getApiUrl();
+                document.getElementById('input-gas-url').value = getGasUrl();
             }
         }
 
-        function saveApiUrl() {
-            const val = document.getElementById('input-api-url').value.trim();
-            if (!val.startsWith('http')) {
-                showToast("올바른 https:// 주소를 입력해 주세요.", "error");
+        function saveGasUrlFromModal() {
+            const url = document.getElementById('input-gas-url').value.trim();
+            if (!url || !url.startsWith('https://script.google.com/')) {
+                showToast("올바른 Google Apps Script 웹 앱 URL을 입력해 주세요.", "error");
                 return;
             }
-            localStorage.setItem(API_URL_STORAGE_KEY, val);
-            toggleApiUrlModal(false);
-            showToast("구글 시트 연동 주소가 저장되었습니다!");
+            localStorage.setItem(GAS_URL_STORAGE_KEY, url);
+            toggleApiModal(false);
+            showToast("연동 주소가 저장되었습니다. 데이터를 불러옵니다.");
             loadDataFromGoogleSheet();
         }
 
@@ -674,6 +678,7 @@
 
         window.onload = function() {
             loadDataFromGoogleSheet();
+            loadSavedHistoryFromSheet();
             document.getElementById('btn-open-history').addEventListener('click', () => toggleHistoryModal(true));
             setTournamentBrackets([
                 { id: 'b_team', title: '팀전 대진표', badgeColor: 'indigo', participants: ['1팀', '2팀', '3팀', '4팀'] }
@@ -681,7 +686,85 @@
         };
 
         // ==========================================
-        // 교사 설정 모드 <-> 학생 모드 전환 엔진
+        // 구글 시트 외부 API 통신 (Fetch)
+        // ==========================================
+        async function loadDataFromGoogleSheet() {
+            const url = getGasUrl();
+            if (!url) {
+                showToast("우측 상단 [시트 주소 설정]에서 앱스 스크립트 URL을 먼저 등록해 주세요.", "error");
+                return;
+            }
+
+            showToast("구글 시트에서 학생 데이터를 읽어오는 중입니다...");
+            try {
+                const response = await fetch(`${url}?action=getStudents`);
+                const resJson = await response.json();
+
+                if (resJson.status === 'success' && Array.isArray(resJson.data)) {
+                    const students = resJson.data;
+                    if (students.length > 0) {
+                        const savedShapes = getSavedShapes();
+                        students.forEach(s => {
+                            const key = `${s.name}_${s.grade}_${s.classNum}_${s.studentNum}`;
+                            if (savedShapes[key] !== undefined) {
+                                s.skill = savedShapes[key];
+                            }
+                        });
+
+                        state.students = students;
+                        state.selectedGrades = ['ALL'];
+                        state.selectedClasses = ['ALL'];
+                        
+                        updateFilterUI();
+                        renderRosterTable();
+                        updateStats();
+                        showToast(`구글 시트에서 총 ${students.length}명의 학생을 불러왔습니다!`);
+                    } else {
+                        showToast("구글 시트에 학생 데이터가 없습니다.", "error");
+                    }
+                } else {
+                    showToast("데이터 읽기 오류: " + (resJson.message || "형식 오류"), "error");
+                }
+            } catch (err) {
+                showToast("시트 연동 실패: URL과 배포 권한('모든 사용자')을 확인해 주세요.", "error");
+            }
+
+            loadSavedHistoryFromSheet();
+        }
+
+        function postToGoogleSheet(action, dataPayload) {
+            const url = getGasUrl();
+            if (!url) return;
+
+            fetch(url, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: action, data: dataPayload })
+            }).catch(err => console.error("시트 전송 오류:", err));
+        }
+
+        async function loadSavedHistoryFromSheet() {
+            const url = getGasUrl();
+            if (!url) return;
+
+            try {
+                const response = await fetch(`${url}?action=getHistory`);
+                const resJson = await response.json();
+                if (resJson.status === 'success' && Array.isArray(resJson.data)) {
+                    state.history = resJson.data;
+                    updateHistoryBadge();
+                    if (!document.getElementById('modal-history').classList.contains('hidden')) {
+                        renderHistoryModalList();
+                    }
+                }
+            } catch (err) {
+                console.error("기록 불러오기 실패:", err);
+            }
+        }
+
+        // ==========================================
+        // 교사 설정 모드 <-> 학생 모드 전환
         // ==========================================
         function toggleStudentMode() {
             state.isStudentMode = !state.isStudentMode;
@@ -768,87 +851,11 @@
         }
 
         function clearLocalStorageAndReload() {
-            const savedUrl = localStorage.getItem(API_URL_STORAGE_KEY);
+            const currentUrl = getGasUrl();
             localStorage.clear();
-            if (savedUrl) localStorage.setItem(API_URL_STORAGE_KEY, savedUrl);
-            showToast("캐시 및 도형 저장 데이터가 초기화되었습니다.");
+            if (currentUrl) localStorage.setItem(GAS_URL_STORAGE_KEY, currentUrl);
+            showToast("도형 캐시 데이터가 초기화되었습니다.");
             loadDataFromGoogleSheet();
-        }
-
-        // ==========================================
-        // ⭐ 외부 호스팅(GitHub)용 fetch API 통신 엔진
-        // ==========================================
-        async function loadDataFromGoogleSheet() {
-            const apiUrl = getApiUrl();
-            if (!apiUrl) {
-                showToast("우측 상단 링크(🔗) 버튼을 눌러 구글 시트 웹 앱 URL을 먼저 설정해 주세요.", "error");
-                return;
-            }
-
-            showToast("구글 시트에서 최신 명단 및 기록을 불러오는 중입니다...");
-            try {
-                const response = await fetch(`${apiUrl}?action=getAll`);
-                const json = await response.json();
-
-                if (json.status === 'success' && json.students) {
-                    const savedShapes = getSavedShapes();
-                    json.students.forEach(s => {
-                        const key = `${s.name}_${s.grade}_${s.classNum}_${s.studentNum}`;
-                        if (savedShapes[key] !== undefined && s.skill === '-') {
-                            s.skill = savedShapes[key];
-                        }
-                    });
-
-                    state.students = json.students;
-                    state.selectedGrades = ['ALL'];
-                    state.selectedClasses = ['ALL'];
-
-                    if (json.history) {
-                        state.history = json.history;
-                        updateHistoryBadge();
-                    }
-
-                    updateFilterUI();
-                    renderRosterTable();
-                    updateStats();
-                    showToast(`구글 시트에서 총 ${json.students.length}명의 학생을 불러왔습니다!`);
-                } else {
-                    showToast("구글 시트에 학생 데이터가 없습니다.", "error");
-                }
-            } catch (err) {
-                showToast("시트 연동 오류: URL 주소 및 웹 앱 접근 권한('모든 사용자')을 확인해 주세요.", "error");
-            }
-        }
-
-        async function postToGoogleSheet(action, data) {
-            const apiUrl = getApiUrl();
-            if (!apiUrl) return;
-            try {
-                await fetch(apiUrl, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: action, data: data })
-                });
-            } catch (err) {
-                console.error("시트 저장 통신 오류:", err);
-            }
-        }
-
-        async function loadSavedHistoryFromSheet() {
-            const apiUrl = getApiUrl();
-            if (!apiUrl) return;
-            try {
-                const response = await fetch(`${apiUrl}?action=getHistory`);
-                const json = await response.json();
-                if (json.status === 'success' && json.data) {
-                    state.history = json.data;
-                    updateHistoryBadge();
-                    if (!document.getElementById('modal-history').classList.contains('hidden')) {
-                        renderHistoryModalList();
-                    }
-                }
-            } catch (err) {
-                console.error("기록 불러오기 오류:", err);
-            }
         }
 
         function handleCSVUpload(event) {
@@ -1326,9 +1333,8 @@
         }
 
         // ==========================================
-        // 토너먼트 대진표 (팀전 / 개인전 통합 엔진)
+        // 토너먼트 대진표 (팀전 / 개인전 통합)
         // ==========================================
-
         function switchTournamentMode(mode, autoGenerate = true) {
             if (state.isStudentMode) return;
             state.tournament.mode = mode;
@@ -1663,7 +1669,6 @@
         // ==========================================
         // 내보내기 및 기록 동기화 유틸리티
         // ==========================================
-
         function copyResultsAsText() {
             if (state.currentTeams.length === 0) return;
             let text = `[🏆 체육수업 팀 구성 결과]\n\n`;
@@ -1761,4 +1766,16 @@
                 document.getElementById('tourney-team-count').value = teamNames.length;
                 switchTournamentMode('TEAM', false);
                 setTournamentBrackets([
-                    { id: 'b_team', title:
+                    { id: 'b_team', title: `팀전 토너먼트 (${teamNames.length}팀)`, badgeColor: 'indigo', participants: teamNames }
+                ]);
+
+                toggleHistoryModal(false);
+                switchTab('result');
+                showToast("이전 팀 구성 기록을 정상적으로 불러왔습니다!");
+            }
+        }
+
+        function escapeHtml(str) { return str ? String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''; }
+    </script>
+</body>
+</html>
