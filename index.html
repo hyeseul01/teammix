@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 체육수업 팀 믹서 (PE Team Mix Studio)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 pb-12">
+
+    <!-- Header -->
+    <header id="main-header" class="bg-slate-900 text-white sticky top-0 z-40 shadow-md transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="header-icon-box" class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 transition-colors">
+                    <i class="fa-solid fa-volleyball text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg sm:text-xl tracking-tight leading-tight">스마트 체육수업 팀 믹서</h1>
+                        <span id="student-mode-badge" class="hidden bg-emerald-500 text-slate-950 text-[11px] font-extrabold px-2 py-0.5 rounded-full">학생 모드</span>
+                    </div>
+                    <p id="header-subtitle" class="text-xs text-indigo-300 font-medium">공정한 체육수업을 위한 스마트 팀 & 대진 생성기</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- 학생 모드 전환 버튼 -->
+                <button id="btn-toggle-student-mode" onclick="toggleStudentMode()" class="px-3.5 py-1.5 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span>학생 모드 전환</span>
+                </button>
+                <!-- 이전 기록 버튼 -->
+                <button id="btn-open-history" class="teacher-only px-3 py-1.5 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-indigo-300 rounded-lg transition-all flex items-center gap-1.5 border border-slate-700">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span class="hidden sm:inline">이전 기록</span>
+                    <span id="history-count" class="bg-indigo-600 text-white text-xs px-1.5 py-0.2 rounded-full font-bold ml-0.5">0</span>
+                </button>
+                <!-- 시트 연동 URL 설정 버튼 -->
+                <button onclick="toggleApiUrlModal(true)" class="teacher-only px-2.5 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all border border-slate-700" title="구글 앱스 스크립트 웹 앱 주소 설정">
+                    <i class="fa-solid fa-link"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        
+        <!-- Tab Controls -->
+        <div class="flex border-b border-slate-200 mb-6 bg-white rounded-xl p-1.5 shadow-sm overflow-x-auto custom-scrollbar">
+            <button id="tab-btn-1" onclick="switchTab('roster')" class="teacher-only flex-1 min-w-[120px] py-2.5 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow-sm">
+                <i class="fa-solid fa-users"></i>
+                <span>1. 명단 관리</span>
+            </button>
+            <button id="tab-btn-2" onclick="switchTab('constraints')" class="teacher-only flex-1 min-w-[120px] py-2.5 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-diagram-project"></i>
+                <span>2. 묶기 / 분리</span>
+            </button>
+            <button id="tab-btn-3" onclick="switchTab('mix')" class="teacher-only flex-1 min-w-[120px] py-2.5 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-shuffle"></i>
+                <span>3. 팀 생성 옵션</span>
+            </button>
+            <button id="tab-btn-4" onclick="switchTab('result')" class="flex-1 min-w-[120px] py-2.5 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-people-group"></i>
+                <span id="tab-label-4">4. 팀 결과 확인</span>
+            </button>
+            <button id="tab-btn-5" onclick="switchTab('tournament')" class="flex-1 min-w-[135px] py-2.5 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:bg-slate-100">
+                <i class="fa-solid fa-sitemap text-amber-500"></i>
+                <span id="tab-label-5">5. 토너먼트 대진</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: ROSTER MANAGEMENT -->
+        <section id="tab-roster" class="tab-content space-y-6">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-file-import text-indigo-600"></i>
+                            학생 명단 불러오기
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">구글 시트 연동, CSV 파일 업로드 또는 직접 추가 기능을 이용하세요.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="loadDataFromGoogleSheet()" class="px-3.5 py-2 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            구글 시트에서 명단 불러오기
+                        </button>
+                        <label class="px-3.5 py-2 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-200 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-csv"></i>
+                            CSV 파일 업로드
+                            <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
+                        </label>
+                        <button onclick="toggleAddModal(true)" class="px-3.5 py-2 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-user-plus"></i>
+                            학생 직접 추가
+                        </button>
+                        <button onclick="clearLocalStorageAndReload()" class="px-3 py-2 text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg border border-rose-200 transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash-arrow-up"></i> 캐시 초기화
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 학년 / 반 다중 선택 필터 패널 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-indigo-100/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-filter text-indigo-600"></i>
+                        수업 학년 / 반 선택 (다중 선택 가능 - 합동 수업 지원)
+                    </h3>
+                    <span class="text-[11px] text-slate-500" id="filter-status-text">전체 학생 표시 중</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <span class="text-[11px] font-bold text-slate-500 block mb-2">학년 선택:</span>
+                        <div id="grade-filter-container" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <span class="text-[11px] font-bold text-slate-500 block mb-2">반 선택:</span>
+                        <div id="class-filter-container" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                        현재 선택 학급 학생 현황
+                    </h3>
+                    <button onclick="generateIndividualTournamentFromRoster('ALL')" class="px-3 py-1.5 text-xs font-extrabold bg-amber-500 text-white hover:bg-amber-600 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors">
+                        <i class="fa-solid fa-user-ninja"></i> 선택 학급 개인전 대진표 바로 생성
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div class="text-xs font-semibold text-slate-500">선택 학급 인원</div>
+                        <div class="text-xl font-extrabold text-slate-900 mt-1" id="stat-total">0명</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">전체 명단: <span id="stat-grand-total">0</span>명</div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                        <div class="text-xs font-semibold text-blue-600">성별 구성</div>
+                        <div class="text-sm font-bold text-blue-900 mt-1">남 <span id="stat-male">0</span> / 여 <span id="stat-female">0</span></div>
+                        <div class="text-[10px] text-blue-500 mt-0.5">선택 학급 성비</div>
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                        <div class="text-xs font-semibold text-amber-700">도형 분포</div>
+                        <div class="text-xs font-bold text-amber-900 mt-1">
+                            ★:<span id="stat-high" class="text-amber-600">0</span> 
+                            ◆:<span id="stat-mid" class="text-indigo-600">0</span> 
+                            기본:<span id="stat-low" class="text-slate-600">0</span>
+                        </div>
+                        <div class="text-[10px] text-amber-600 mt-0.5">실시간 구글 시트 저장</div>
+                    </div>
+                    <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                        <div class="text-xs font-semibold text-indigo-700">제약 조건 수</div>
+                        <div class="text-xl font-extrabold text-indigo-900 mt-1"><span id="stat-constraints">0</span>개</div>
+                        <div class="text-[10px] text-indigo-500 mt-0.5">묶기 및 분리 규칙</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Tables -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Male Students Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden">
+                    <div class="px-4 py-3 bg-blue-50 border-b border-blue-100 flex items-center justify-between">
+                        <h3 class="font-bold text-sm text-blue-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-mars text-blue-600"></i> 남학생 명단 (<span id="male-table-count">0</span>명)
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-[400px]">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-600 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-2.5 w-12 text-center whitespace-nowrap">참석</th>
+                                    <th class="p-2.5 text-center whitespace-nowrap">학년</th>
+                                    <th class="p-2.5 text-center whitespace-nowrap">반</th>
+                                    <th class="p-2.5 text-center whitespace-nowrap">번호</th>
+                                    <th class="p-2.5 whitespace-nowrap">이름</th>
+                                    <th class="p-2.5 text-center w-20"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="male-roster-tbody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Female Students Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-pink-200 overflow-hidden">
+                    <div class="px-4 py-3 bg-pink-50 border-b border-pink-100 flex items-center justify-between">
+                        <h3 class="font-bold text-sm text-pink-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-venus text-pink-600"></i> 여학생 명단 (<span id="female-table-count">0</span>명)
+                        </h3>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar max-h-[400px]">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-600 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-2.5 w-12 text-center whitespace-nowrap">참석</th>
+                                    <th class="p-2.5 text-center whitespace-nowrap">학년</th>
+                                    <th class="p-2.5 text-center whitespace-nowrap">반</th>
+                                    <th class="p-2.5 text-center whitespace-nowrap">번호</th>
+                                    <th class="p-2.5 whitespace-nowrap">이름</th>
+                                    <th class="p-2.5 text-center w-20"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="female-roster-tbody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: CONSTRAINTS -->
+        <section id="tab-constraints" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                <h2 class="text-base font-bold text-slate-900 flex items-center gap-2 mb-1">
+                    <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+                    특정 학생 묶기 및 분리 제약 조건
+                </h2>
+                <div class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">첫 번째 학생</label>
+                            <select id="rule-student-1" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">관계 조건</label>
+                            <select id="rule-type" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800">
+                                <option value="SEPARATE" class="text-rose-600">⚡ 반드시 서로 다른 팀 (분리)</option>
+                                <option value="PAIR" class="text-indigo-600">🔗 반드시 같은 팀 (지정)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-slate-600 block mb-1">두 번째 학생</label>
+                            <select id="rule-student-2" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg bg-white"></select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="addConstraintRule()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition-colors">
+                            <i class="fa-solid fa-plus"></i> 규칙 추가하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center justify-between">
+                    <span>설정된 제약 조건 리스트</span>
+                    <span id="rules-count-badge" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">총 0개</span>
+                </h3>
+                <div id="rules-list" class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar"></div>
+            </div>
+        </section>
+
+        <!-- TAB 3: TEAM MIX OPTIONS -->
+        <section id="tab-mix" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                        <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-indigo-600"></i>
+                            팀 배분 방식 선택 (6가지 모드)
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <label class="mode-card relative flex p-3.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200 transition-all" id="mode-card-PURE_RANDOM" onclick="selectMixMode('PURE_RANDOM')">
+                                <input type="radio" name="mix-mode" value="PURE_RANDOM" class="mt-0.5 text-indigo-600">
+                                <div class="ml-2.5">
+                                    <span class="block text-xs font-bold text-slate-900"><i class="fa-solid fa-dice text-purple-600 mr-1"></i> 완전 랜덤</span>
+                                    <span class="block text-[11px] text-slate-500 mt-0.5">성별/실력 미고려. 지정 조건만 적용.</span>
+                                </div>
+                            </label>
+
+                            <label class="mode-card relative flex p-3.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200 transition-all" id="mode-card-SKILL_ONLY" onclick="selectMixMode('SKILL_ONLY')">
+                                <input type="radio" name="mix-mode" value="SKILL_ONLY" class="mt-0.5 text-indigo-600">
+                                <div class="ml-2.5">
+                                    <span class="block text-xs font-bold text-slate-900"><i class="fa-solid fa-shapes text-amber-500 mr-1"></i> 도형(실력) 균형</span>
+                                    <span class="block text-[11px] text-slate-500 mt-0.5">성별 상관없이 ★/◆/기본 균등 분배.</span>
+                                </div>
+                            </label>
+
+                            <label class="mode-card relative flex p-3.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200 transition-all" id="mode-card-GENDER_ONLY" onclick="selectMixMode('GENDER_ONLY')">
+                                <input type="radio" name="mix-mode" value="GENDER_ONLY" class="mt-0.5 text-indigo-600">
+                                <div class="ml-2.5">
+                                    <span class="block text-xs font-bold text-slate-900"><i class="fa-solid fa-venus-mars text-blue-600 mr-1"></i> 성별 균형</span>
+                                    <span class="block text-[11px] text-slate-500 mt-0.5">도형 상관없이 남녀 비율만 균등.</span>
+                                </div>
+                            </label>
+
+                            <label class="mode-card relative flex p-3.5 border-2 rounded-xl cursor-pointer hover:border-indigo-200 transition-all border-indigo-600 bg-indigo-50/30" id="mode-card-SKILL_GENDER" onclick="selectMixMode('SKILL_GENDER')">
+                                <input type="radio" name="mix-mode" value="SKILL_GENDER" checked class="mt-0.5 text-indigo-600">
+                                <div class="ml-2.5">
+                                    <span class="block text-xs font-bold text-slate-900"><i class="fa-solid fa-scale-balanced text-indigo-600 mr-1"></i> 도형 + 성별 복합 균형</span>
+                                    <span class="block text-[11px] text-slate-500 mt-0.5">성비와 ★/◆ 도형 비율 모두 동등 배분.</span>
+                                </div>
+                            </label>
+
+                            <label class="mode-card relative flex p-3.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200 transition-all" id="mode-card-GENDER_SPLIT" onclick="selectMixMode('GENDER_SPLIT')">
+                                <input type="radio" name="mix-mode" value="GENDER_SPLIT" class="mt-0.5 text-indigo-600">
+                                <div class="ml-2.5">
+                                    <span class="block text-xs font-bold text-slate-900"><i class="fa-solid fa-mars-and-venus-burst text-pink-600 mr-1"></i> 성별 구분</span>
+                                    <span class="block text-[11px] text-slate-500 mt-0.5">남학생 전용 팀 / 여학생 전용 팀 분리.</span>
+                                </div>
+                            </label>
+
+                            <label class="mode-card relative flex p-3.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200 transition-all" id="mode-card-SKILL_GENDER_SPLIT" onclick="selectMixMode('SKILL_GENDER_SPLIT')">
+                                <input type="radio" name="mix-mode" value="SKILL_GENDER_SPLIT" class="mt-0.5 text-indigo-600">
+                                <div class="ml-2.5">
+                                    <span class="block text-xs font-bold text-slate-900"><i class="fa-solid fa-people-line text-emerald-600 mr-1"></i> 도형 + 성별 구분</span>
+                                    <span class="block text-[11px] text-slate-500 mt-0.5">남/녀 팀 분리 후 팀군 내 도형 맞춤.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+                        <h2 class="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-cubes text-indigo-600"></i> 팀 수 지정
+                        </h2>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-slate-600 font-semibold">생성할 총 팀 개수:</span>
+                            <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-slate-50">
+                                <button onclick="adjustTeamCount(-1)" class="px-3 py-1.5 hover:bg-slate-200 text-slate-700 font-bold">-</button>
+                                <input type="number" id="input-team-count" value="4" min="2" max="20" class="w-14 text-center text-xs font-bold bg-transparent outline-none">
+                                <button onclick="adjustTeamCount(1)" class="px-3 py-1.5 hover:bg-slate-200 text-slate-700 font-bold">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-900/60 px-2 py-0.5 rounded-full">Mix Control Panel</span>
+                            <h3 class="text-lg font-bold mt-2 text-white">팀 조합 실행</h3>
+                            
+                            <div class="mt-4 space-y-2 text-xs text-slate-300">
+                                <div class="flex justify-between py-1 border-b border-slate-800">
+                                    <span>선택 학급 학생:</span>
+                                    <span class="font-bold text-white" id="mix-summary-total">0명</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-800">
+                                    <span>선택 모드:</span>
+                                    <span class="font-bold text-indigo-300" id="mix-summary-mode">도형 + 성별 복합 균형</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-800">
+                                    <span>적용 규칙 수:</span>
+                                    <span class="font-bold text-emerald-400" id="mix-summary-rules">0개</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8">
+                            <button onclick="executeTeamMix()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-indigo-600/40 transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bolt text-amber-300"></i> 팀 생성하기 (Mix Start!)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: RESULTS -->
+        <section id="tab-result" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-700">팀 구성 현황</span>
+                    <span id="student-readonly-notice" class="hidden text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                        <i class="fa-solid fa-eye mr-1"></i> 학생 확인 전용 모드 (팀원 변경 불가)
+                    </span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="generateTournamentFromCurrentTeams()" class="teacher-only px-3.5 py-1.5 text-xs font-extrabold bg-amber-500 text-white hover:bg-amber-600 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors">
+                        <i class="fa-solid fa-trophy"></i> 이 팀으로 토너먼트 대진 생성
+                    </button>
+                    <button onclick="executeTeamMix()" class="teacher-only px-3 py-1.5 text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg border border-indigo-200 flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-right"></i> 다시 섞기
+                    </button>
+                    <button onclick="copyResultsAsText()" class="px-3 py-1.5 text-xs font-bold bg-slate-800 text-white hover:bg-slate-700 rounded-lg flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> 텍스트 복사
+                    </button>
+                    <button onclick="exportToCSV()" class="teacher-only px-3 py-1.5 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 rounded-lg flex items-center gap-1">
+                        <i class="fa-solid fa-file-excel"></i> CSV 저장
+                    </button>
+                    <button onclick="downloadAsImage('teams-capture-area', '체육팀_결과')" class="px-3 py-1.5 text-xs font-bold bg-sky-600 text-white hover:bg-sky-500 rounded-lg flex items-center gap-1">
+                        <i class="fa-solid fa-image"></i> 이미지 저장
+                    </button>
+                </div>
+            </div>
+
+            <div id="teams-capture-area" class="p-4 bg-slate-100 rounded-2xl">
+                <div class="mb-4 text-center sm:text-left">
+                    <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">체육수업 팀 구성 결과</h2>
+                </div>
+                <div id="teams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+            </div>
+        </section>
+
+        <!-- TAB 5: TOURNAMENT BRACKET -->
+        <section id="tab-tournament" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-sitemap text-amber-500"></i>
+                            토너먼트 대진표 <span id="tourney-student-hint" class="hidden text-xs font-bold text-emerald-600">(경기 승리자 클릭 가능)</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">승리한 팀 또는 학생 박스를 클릭하면 다음 라운드로 자동 진출합니다.</p>
+                    </div>
+                    
+                    <div class="teacher-only inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200 self-start">
+                        <button id="btn-tourney-mode-TEAM" onclick="switchTournamentMode('TEAM')" class="px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-people-group"></i> 팀전 대진표
+                        </button>
+                        <button id="btn-tourney-mode-INDIVIDUAL" onclick="switchTournamentMode('INDIVIDUAL')" class="px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-ninja"></i> 개인전 대진표 (명단 연동)
+                        </button>
+                    </div>
+
+                    <div id="tourney-student-actions" class="hidden flex items-center gap-2">
+                        <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <i class="fa-solid fa-lock text-slate-400 mr-1"></i> 대진표 수정 잠금됨
+                        </span>
+                        <button onclick="downloadAsImage('tournament-capture-area', '토너먼트_대진표')" class="px-3 py-1.5 text-xs font-bold bg-sky-600 text-white hover:bg-sky-500 rounded-lg flex items-center gap-1">
+                            <i class="fa-solid fa-image"></i> 이미지 저장
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 팀전 전용 컨트롤 -->
+                <div id="tourney-controls-TEAM" class="teacher-only pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <span class="text-xs font-bold text-slate-600">참가 팀 수:</span>
+                            <input type="number" id="tourney-team-count" value="4" min="2" max="16" class="w-10 text-center text-xs font-extrabold bg-white border border-slate-300 rounded py-0.5 outline-none">
+                            <button onclick="createCustomTeamBracket()" class="px-2.5 py-1 text-xs font-bold bg-slate-800 text-white hover:bg-slate-700 rounded transition-colors">
+                                새 팀 대진표
+                            </button>
+                        </div>
+                        <button onclick="generateTournamentFromCurrentTeams()" class="px-3 py-1.5 text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg border border-amber-200 flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i> 생성된 팀 불러오기
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="shuffleAllBrackets()" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg border border-indigo-200 flex items-center gap-1">
+                            <i class="fa-solid fa-shuffle"></i> 대진 추첨(섞기)
+                        </button>
+                        <button onclick="resetAllBrackets()" class="px-3 py-1.5 text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg border border-rose-200 flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> 승패 초기화
+                        </button>
+                        <button onclick="downloadAsImage('tournament-capture-area', '토너먼트_대진표')" class="px-3 py-1.5 text-xs font-bold bg-sky-600 text-white hover:bg-sky-500 rounded-lg flex items-center gap-1">
+                            <i class="fa-solid fa-image"></i> 이미지 저장
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 개인전 전용 컨트롤 -->
+                <div id="tourney-controls-INDIVIDUAL" class="teacher-only hidden pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="generateIndividualTournamentFromRoster('ALL')" class="px-3.5 py-1.5 text-xs font-extrabold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-users"></i> 선택 학급 전체 개인전 (남녀 통합)
+                        </button>
+                        <button onclick="generateIndividualTournamentFromRoster('GENDER_SPLIT')" class="px-3.5 py-1.5 text-xs font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg shadow-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-venus-mars"></i> 남/여 분리 개인전 (남학생부 · 여학생부)
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="shuffleAllBrackets()" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg border border-indigo-200 flex items-center gap-1">
+                            <i class="fa-solid fa-shuffle"></i> 시드 다시 섞기
+                        </button>
+                        <button onclick="resetAllBrackets()" class="px-3 py-1.5 text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg border border-rose-200 flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> 승패 초기화
+                        </button>
+                        <button onclick="downloadAsImage('tournament-capture-area', '개인전_토너먼트_대진표')" class="px-3 py-1.5 text-xs font-bold bg-sky-600 text-white hover:bg-sky-500 rounded-lg flex items-center gap-1">
+                            <i class="fa-solid fa-image"></i> 이미지 저장
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 대진표 렌더링 영역 -->
+            <div id="tournament-capture-area" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 overflow-x-auto custom-scrollbar space-y-8">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3 min-w-[650px]">
+                    <div>
+                        <input type="text" id="tournament-title-input" value="🏆 체육수업 토너먼트 대진표" class="text-lg font-extrabold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none px-1 py-0.5 w-96">
+                        <p id="tournament-title-help" class="text-[11px] text-slate-400 px-1 mt-0.5">* 제목을 클릭하여 대회명을 직접 수정할 수 있습니다.</p>
+                    </div>
+                </div>
+
+                <div id="brackets-wrapper" class="space-y-10 min-w-[650px]">
+                    <div class="w-full text-center py-12 text-slate-400 text-xs">
+                        대진표 생성 버튼을 눌러 시작해 주세요.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Add Student -->
+    <div id="modal-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-indigo-600"></i> 학생 직접 추가
+                </h3>
+                <button onclick="toggleAddModal(false)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleAddStudentSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="font-semibold text-slate-600 block mb-1">이름 *</label>
+                    <input type="text" id="add-name" required placeholder="예: 김철수" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 block mb-1">성별 *</label>
+                    <select id="add-gender" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="남">남학생</option>
+                        <option value="여">여학생</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">학년</label>
+                        <input type="text" id="add-grade" placeholder="1" class="w-full px-2 py-2 border border-slate-300 rounded-lg text-center outline-none">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">반</label>
+                        <input type="text" id="add-class" placeholder="1" class="w-full px-2 py-2 border border-slate-300 rounded-lg text-center outline-none">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">번호</label>
+                        <input type="text" id="add-num" placeholder="1" class="w-full px-2 py-2 border border-slate-300 rounded-lg text-center outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="font-semibold text-slate-600 block mb-1">초기 도형 지정</label>
+                    <select id="add-skill" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="-">기본 (-)</option>
+                        <option value="★">★ 선택</option>
+                        <option value="◆">◆ 선택</option>
+                    </select>
+                </div>
+                <div class="mt-5 flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="toggleAddModal(false)" class="px-4 py-2 font-semibold bg-slate-100 text-slate-700 rounded-lg">취소</button>
+                    <button type="submit" class="px-4 py-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">추가하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: History -->
+    <div id="modal-history" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-history text-indigo-600"></i> 구글 시트 동기화 이전 팀 기록
+                </h3>
+                <button onclick="toggleHistoryModal(false)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="history-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Apps Script  Config -->
+    <div id="modal-api-" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-link text-indigo-600"></i> 구글 시트 연동  설정
+                </h3>
+                <button onclick="toggleApiModal(false)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">구글 앱스 스크립트에서 [새 배포] 후 발급받은 웹 앱 URL을 입력해 주세요.</p>
+            <input type="url" id="input-api-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full text-xs px-3 py-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono">
+            <div class="mt-4 flex justify-end gap-2">
+                <button onclick="toggleApiUrlModal(false)" class="px-4 py-2 text-xs font-semibold bg-slate-100 text-slate-700 rounded-lg">취소</button>
+                <button onclick="saveApiUrl()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">저장 및 불러오기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message">알림 메시지</span>
+    </div>
+
+    <script>
+        // =========================================================================
+        // ★ 여기에 구글 앱스 스크립트에서 발급받은 웹 앱 주소를 붙여넣으세요!
+        // =========================================================================
+        const DEFAULT_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTamjasxtp68aOELZpKJjwMRgRtYEVWHeXhzccvE3ODY7ue3CPoK7QOlqyaY9G8UX1/exec";
+        // =========================================================================
+
+        const API_URL_STORAGE_KEY = 'pe_apps_script_api_url';
+        const LOCAL_SHAPES_KEY = 'pe_shape_skills_save';
+
+        function getApiUrl() {
+            const saved = localStorage.getItem(API_URL_STORAGE_KEY);
+            if (saved && saved.startsWith('http')) return saved;
+            if (DEFAULT_APPS_SCRIPT_URL && DEFAULT_APPS_SCRIPT_URL.startsWith('http')) return DEFAULT_APPS_SCRIPT_URL;
+            return '';
+        }
+
+        function toggleApiUrlModal(show) {
+            const modal = document.getElementById('modal-api-url');
+            modal.classList.toggle('hidden', !show);
+            if (show) {
+                document.getElementById('input-api-url').value = getApiUrl();
+            }
+        }
+
+        function saveApiUrl() {
+            const val = document.getElementById('input-api-url').value.trim();
+            if (!val.startsWith('http')) {
+                showToast("올바른 https:// 주소를 입력해 주세요.", "error");
+                return;
+            }
+            localStorage.setItem(API_URL_STORAGE_KEY, val);
+            toggleApiUrlModal(false);
+            showToast("구글 시트 연동 주소가 저장되었습니다!");
+            loadDataFromGoogleSheet();
+        }
+
+        let state = {
+            isStudentMode: false,
+            activeTab: 'roster',
+            students: [],
+            selectedGrades: ['ALL'],
+            selectedClasses: ['ALL'],
+            constraints: [],
+            mixOptions: { mode: 'SKILL_GENDER', teamCount: 4 },
+            currentTeams: [],
+            history: [],
+            tournament: {
+                mode: 'TEAM',
+                brackets: []
+            }
+        };
+
+        const MODE_NAMES = {
+            'PURE_RANDOM': '완전 랜덤 (조건만 적용)',
+            'SKILL_ONLY': '도형(실력) 균형',
+            'GENDER_ONLY': '성별 균형',
+            'SKILL_GENDER': '도형 + 성별 복합 균형',
+            'GENDER_SPLIT': '성별 구분 (남/녀 전용팀)',
+            'SKILL_GENDER_SPLIT': '도형 + 성별 구분'
+        };
+
+        const TEAM_COLORS = [
+            { border: 'border-red-200', header: 'bg-red-500' },
+            { border: 'border-blue-200', header: 'bg-blue-500' },
+            { border: 'border-emerald-200', header: 'bg-emerald-500' },
+            { border: 'border-amber-200', header: 'bg-amber-500' },
+            { border: 'border-purple-200', header: 'bg-purple-500' },
+            { border: 'border-cyan-200', header: 'bg-cyan-500' },
+        ];
+
+        window.onload = function() {
+            loadDataFromGoogleSheet();
+            document.getElementById('btn-open-history').addEventListener('click', () => toggleHistoryModal(true));
+            setTournamentBrackets([
+                { id: 'b_team', title: '팀전 대진표', badgeColor: 'indigo', participants: ['1팀', '2팀', '3팀', '4팀'] }
+            ]);
+        };
+
+        // ==========================================
+        // 교사 설정 모드 <-> 학생 모드 전환 엔진
+        // ==========================================
+        function toggleStudentMode() {
+            state.isStudentMode = !state.isStudentMode;
+            applyStudentModeUI();
+
+            if (state.isStudentMode) {
+                if (state.activeTab !== 'result' && state.activeTab !== 'tournament') {
+                    if (state.currentTeams && state.currentTeams.length > 0) {
+                        switchTab('result');
+                    } else {
+                        switchTab('tournament');
+                    }
+                }
+                showToast("학생 모드로 전환되었습니다. (팀원/대진 변경 잠금 · 승자 클릭 가능)");
+            } else {
+                showToast("교사 설정 모드로 복귀했습니다. 모든 설정이 활성화됩니다.");
+            }
+        }
+
+        function applyStudentModeUI() {
+            const isStd = state.isStudentMode;
+            const header = document.getElementById('main-header');
+            const iconBox = document.getElementById('header-icon-box');
+            const badge = document.getElementById('student-mode-badge');
+            const toggleBtn = document.getElementById('btn-toggle-student-mode');
+            const titleInput = document.getElementById('tournament-title-input');
+
+            document.querySelectorAll('.teacher-only').forEach(el => {
+                el.classList.toggle('hidden', isStd);
+            });
+
+            if (isStd) {
+                header.classList.remove('bg-slate-900');
+                header.classList.add('bg-emerald-950');
+                iconBox.classList.remove('bg-indigo-600');
+                iconBox.classList.add('bg-emerald-600');
+                badge.classList.remove('hidden');
+
+                toggleBtn.className = "px-3.5 py-1.5 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold rounded-lg transition-all flex items-center gap-1.5 border border-slate-600 shadow-sm";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-unlock-keyhole"></i> <span>교사 설정 복귀</span>`;
+
+                document.getElementById('tab-label-4').innerText = "팀 결과 확인";
+                document.getElementById('tab-label-5').innerText = "토너먼트 대진표";
+                document.getElementById('student-readonly-notice').classList.remove('hidden');
+                document.getElementById('tourney-student-hint').classList.remove('hidden');
+                document.getElementById('tourney-student-actions').classList.remove('hidden');
+                document.getElementById('tournament-title-help').classList.add('hidden');
+                titleInput.readOnly = true;
+            } else {
+                header.classList.remove('bg-emerald-950');
+                header.classList.add('bg-slate-900');
+                iconBox.classList.remove('bg-emerald-600');
+                iconBox.classList.add('bg-indigo-600');
+                badge.classList.add('hidden');
+
+                toggleBtn.className = "px-3.5 py-1.5 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-sm";
+                toggleBtn.innerHTML = `<i class="fa-solid fa-chalkboard-user"></i> <span>학생 모드 전환</span>`;
+
+                document.getElementById('tab-label-4').innerText = "4. 팀 결과 확인";
+                document.getElementById('tab-label-5').innerText = "5. 토너먼트 대진";
+                document.getElementById('student-readonly-notice').classList.add('hidden');
+                document.getElementById('tourney-student-hint').classList.add('hidden');
+                document.getElementById('tourney-student-actions').classList.add('hidden');
+                document.getElementById('tournament-title-help').classList.remove('hidden');
+                titleInput.readOnly = false;
+
+                switchTournamentMode(state.tournament.mode, false);
+            }
+
+            renderTeamResults();
+        }
+
+        function getSavedShapes() {
+            try {
+                const saved = localStorage.getItem(LOCAL_SHAPES_KEY);
+                return saved ? JSON.parse(saved) : {};
+            } catch(e) { return {}; }
+        }
+
+        function saveShapeToLocal(studentKey, shape) {
+            const saved = getSavedShapes();
+            saved[studentKey] = shape;
+            localStorage.setItem(LOCAL_SHAPES_KEY, JSON.stringify(saved));
+        }
+
+        function clearLocalStorageAndReload() {
+            const savedUrl = localStorage.getItem(API_URL_STORAGE_KEY);
+            localStorage.clear();
+            if (savedUrl) localStorage.setItem(API_URL_STORAGE_KEY, savedUrl);
+            showToast("캐시 및 도형 저장 데이터가 초기화되었습니다.");
+            loadDataFromGoogleSheet();
+        }
+
+        // ==========================================
+        // ⭐ 외부 호스팅(GitHub)용 fetch API 통신 엔진
+        // ==========================================
+        async function loadDataFromGoogleSheet() {
+            const apiUrl = getApiUrl();
+            if (!apiUrl) {
+                showToast("우측 상단 링크(🔗) 버튼을 눌러 구글 시트 웹 앱 URL을 먼저 설정해 주세요.", "error");
+                return;
+            }
+
+            showToast("구글 시트에서 최신 명단 및 기록을 불러오는 중입니다...");
+            try {
+                const response = await fetch(`${apiUrl}?action=getAll`);
+                const json = await response.json();
+
+                if (json.status === 'success' && json.students) {
+                    const savedShapes = getSavedShapes();
+                    json.students.forEach(s => {
+                        const key = `${s.name}_${s.grade}_${s.classNum}_${s.studentNum}`;
+                        if (savedShapes[key] !== undefined && s.skill === '-') {
+                            s.skill = savedShapes[key];
+                        }
+                    });
+
+                    state.students = json.students;
+                    state.selectedGrades = ['ALL'];
+                    state.selectedClasses = ['ALL'];
+
+                    if (json.history) {
+                        state.history = json.history;
+                        updateHistoryBadge();
+                    }
+
+                    updateFilterUI();
+                    renderRosterTable();
+                    updateStats();
+                    showToast(`구글 시트에서 총 ${json.students.length}명의 학생을 불러왔습니다!`);
+                } else {
+                    showToast("구글 시트에 학생 데이터가 없습니다.", "error");
+                }
+            } catch (err) {
+                showToast("시트 연동 오류: URL 주소 및 웹 앱 접근 권한('모든 사용자')을 확인해 주세요.", "error");
+            }
+        }
+
+        async function postToGoogleSheet(action, data) {
+            const apiUrl = getApiUrl();
+            if (!apiUrl) return;
+            try {
+                await fetch(apiUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: action, data: data })
+                });
+            } catch (err) {
+                console.error("시트 저장 통신 오류:", err);
+            }
+        }
+
+        async function loadSavedHistoryFromSheet() {
+            const apiUrl = getApiUrl();
+            if (!apiUrl) return;
+            try {
+                const response = await fetch(`${apiUrl}?action=getHistory`);
+                const json = await response.json();
+                if (json.status === 'success' && json.data) {
+                    state.history = json.data;
+                    updateHistoryBadge();
+                    if (!document.getElementById('modal-history').classList.contains('hidden')) {
+                        renderHistoryModalList();
+                    }
+                }
+            } catch (err) {
+                console.error("기록 불러오기 오류:", err);
+            }
+        }
+
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                processCSVText(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function processCSVText(rawText) {
+            if (!rawText) return;
+            const lines = rawText.split('\n');
+            let added = 0;
+            const savedShapes = getSavedShapes();
+
+            lines.forEach((line, idx) => {
+                const cols = line.split(/\t|,|\s{2,}/).map(c => c.trim()).filter(Boolean);
+                if (cols.length > 0 && idx > 0) {
+                    const name = cols[0];
+                    const gender = cols[1] && cols[1].includes('여') ? '여' : '남';
+                    const grade = cols[2] || '1';
+                    const classNum = cols[3] || '1';
+                    const studentNum = cols[4] || '-';
+                    const key = `${name}_${grade}_${classNum}_${studentNum}`;
+                    const skill = savedShapes[key] !== undefined ? savedShapes[key] : '-';
+
+                    state.students.push({
+                        id: `std_csv_${Date.now()}_${idx}`,
+                        name, gender, grade, classNum, studentNum, skill, active: true
+                    });
+                    added++;
+                }
+            });
+
+            updateFilterUI();
+            renderRosterTable();
+            updateStats();
+            showToast(`CSV에서 ${added}명의 명단을 불러왔습니다.`);
+        }
+
+        function toggleAddModal(show) {
+            document.getElementById('modal-add').classList.toggle('hidden', !show);
+        }
+
+        function handleAddStudentSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('add-name').value.trim();
+            const gender = document.getElementById('add-gender').value;
+            const grade = document.getElementById('add-grade').value.trim() || '1';
+            const classNum = document.getElementById('add-class').value.trim() || '1';
+            const studentNum = document.getElementById('add-num').value.trim() || '-';
+            const skill = document.getElementById('add-skill').value;
+
+            if (!name) return;
+
+            const key = `${name}_${grade}_${classNum}_${studentNum}`;
+            saveShapeToLocal(key, skill);
+
+            state.students.push({
+                id: `std_manual_${Date.now()}`,
+                name, gender, grade, classNum, studentNum, skill, active: true
+            });
+
+            document.getElementById('add-name').value = '';
+            toggleAddModal(false);
+            updateFilterUI();
+            renderRosterTable();
+            updateStats();
+            showToast(`${name} 학생이 새로 추가되었습니다.`);
+        }
+
+        function getFilteredStudents() {
+            return state.students.filter(s => {
+                const gradeStr = String(s.grade).trim();
+                const classStr = String(s.classNum).trim();
+                const gradeMatch = state.selectedGrades.includes('ALL') || state.selectedGrades.includes(gradeStr);
+                const classMatch = state.selectedClasses.includes('ALL') || state.selectedClasses.includes(classStr);
+                return gradeMatch && classMatch;
+            });
+        }
+
+        function updateFilterUI() {
+            const gradeContainer = document.getElementById('grade-filter-container');
+            const classContainer = document.getElementById('class-filter-container');
+
+            const grades = Array.from(new Set(state.students.map(s => String(s.grade).trim()))).sort();
+            const classes = Array.from(new Set(state.students.map(s => String(s.classNum).trim()))).sort((a,b) => parseInt(a) - parseInt(b));
+
+            gradeContainer.innerHTML = createFilterButton('ALL', '전체 학년', state.selectedGrades.includes('ALL'), 'grade');
+            grades.forEach(g => {
+                gradeContainer.innerHTML += createFilterButton(g, `${g}학년`, state.selectedGrades.includes(g), 'grade');
+            });
+
+            classContainer.innerHTML = createFilterButton('ALL', '전체 반', state.selectedClasses.includes('ALL'), 'class');
+            classes.forEach(c => {
+                classContainer.innerHTML += createFilterButton(c, `${c}반`, state.selectedClasses.includes(c), 'class');
+            });
+        }
+
+        function createFilterButton(val, label, isSelected, type) {
+            const bgClass = isSelected ? 'bg-indigo-600 text-white font-bold shadow-sm' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100';
+            return `<button onclick="toggleFilter('${type}', '${val}')" class="px-2.5 py-1 text-xs rounded-lg transition-all ${bgClass}">${label}</button>`;
+        }
+
+        function toggleFilter(type, val) {
+            let list = type === 'grade' ? [...state.selectedGrades] : [...state.selectedClasses];
+
+            if (val === 'ALL') {
+                list = ['ALL'];
+            } else {
+                list = list.filter(v => v !== 'ALL');
+                if (list.includes(val)) {
+                    list = list.filter(v => v !== val);
+                } else {
+                    list.push(val);
+                }
+                if (list.length === 0) list = ['ALL'];
+            }
+
+            if (type === 'grade') state.selectedGrades = list;
+            else state.selectedClasses = list;
+
+            updateFilterUI();
+            renderRosterTable();
+            updateStats();
+        }
+
+        function renderRosterTable() {
+            const maleTbody = document.getElementById('male-roster-tbody');
+            const femaleTbody = document.getElementById('female-roster-tbody');
+            
+            maleTbody.innerHTML = '';
+            femaleTbody.innerHTML = '';
+
+            const filtered = getFilteredStudents();
+            const males = filtered.filter(s => s.gender === '남');
+            const females = filtered.filter(s => s.gender === '여');
+
+            document.getElementById('male-table-count').innerText = males.length;
+            document.getElementById('female-table-count').innerText = females.length;
+
+            males.forEach(st => maleTbody.appendChild(createStudentRow(st)));
+            females.forEach(st => femaleTbody.appendChild(createStudentRow(st)));
+        }
+
+        function createStudentRow(student) {
+            const tr = document.createElement('tr');
+            tr.className = student.active ? "hover:bg-slate-50" : "bg-slate-100/60 opacity-60";
+
+            const isStar = student.skill === '★';
+            const isDiamond = student.skill === '◆';
+
+            tr.innerHTML = `
+                <td class="p-2.5 text-center whitespace-nowrap">
+                    <input type="checkbox" ${student.active ? 'checked' : ''} onchange="toggleStudentActive('${student.id}')" class="w-4 h-4 text-indigo-600 rounded">
+                </td>
+                <td class="p-2.5 text-center text-slate-500 font-mono whitespace-nowrap">${escapeHtml(student.grade)}</td>
+                <td class="p-2.5 text-center text-slate-500 font-mono whitespace-nowrap">${escapeHtml(student.classNum)}</td>
+                <td class="p-2.5 text-center text-slate-500 font-mono whitespace-nowrap">${escapeHtml(student.studentNum)}</td>
+                <td class="p-2.5 font-bold text-slate-900 whitespace-nowrap">${escapeHtml(student.name)}</td>
+                <td class="p-2.5 text-center w-20">
+                    <div class="flex items-center justify-center gap-1.5">
+                        <button onclick="toggleShapeSkill('${student.id}', '★')" class="w-7 h-7 flex items-center justify-center rounded-lg text-base ${isStar ? 'bg-amber-100 text-amber-500 font-bold border border-amber-300' : 'text-slate-300 hover:text-amber-400'}">
+                            ${isStar ? '★' : '☆'}
+                        </button>
+                        <button onclick="toggleShapeSkill('${student.id}', '◆')" class="w-7 h-7 flex items-center justify-center rounded-lg text-base ${isDiamond ? 'bg-indigo-100 text-indigo-600 font-bold border border-indigo-300' : 'text-slate-300 hover:text-indigo-400'}">
+                            ${isDiamond ? '◆' : '◇'}
+                        </button>
+                    </div>
+                </td>
+            `;
+            return tr;
+        }
+
+        function toggleShapeSkill(id, targetShape) {
+            if (state.isStudentMode) return;
+            const st = state.students.find(s => s.id === id);
+            if (!st) return;
+
+            st.skill = (st.skill === targetShape) ? '-' : targetShape;
+            
+            const key = `${st.name}_${st.grade}_${st.classNum}_${st.studentNum}`;
+            saveShapeToLocal(key, st.skill);
+
+            renderRosterTable();
+            updateStats();
+
+            postToGoogleSheet('updateSkill', { name: st.name, skill: st.skill });
+        }
+
+        function toggleStudentActive(id) {
+            if (state.isStudentMode) return;
+            const st = state.students.find(s => s.id === id);
+            if (st) { st.active = !st.active; renderRosterTable(); updateStats(); }
+        }
+
+        function updateStats() {
+            const filteredStudents = getFilteredStudents();
+            const activeStudents = filteredStudents.filter(s => s.active);
+
+            document.getElementById('stat-total').innerText = `${activeStudents.length}명`;
+            document.getElementById('stat-grand-total').innerText = state.students.length;
+            document.getElementById('stat-male').innerText = activeStudents.filter(s => s.gender === '남').length;
+            document.getElementById('stat-female').innerText = activeStudents.filter(s => s.gender === '여').length;
+            document.getElementById('stat-high').innerText = activeStudents.filter(s => s.skill === '★').length;
+            document.getElementById('stat-mid').innerText = activeStudents.filter(s => s.skill === '◆').length;
+            document.getElementById('stat-low').innerText = activeStudents.filter(s => s.skill !== '★' && s.skill !== '◆').length;
+            document.getElementById('stat-constraints').innerText = state.constraints.length;
+        }
+
+        function populateConstraintDropdowns() {
+            const sel1 = document.getElementById('rule-student-1');
+            const sel2 = document.getElementById('rule-student-2');
+            sel1.innerHTML = ''; sel2.innerHTML = '';
+            
+            const activeStudents = getFilteredStudents().filter(s => s.active);
+
+            activeStudents.forEach(s => {
+                const optText = `${s.name} (${s.grade}-${s.classNum}) - ${s.gender}`;
+                sel1.appendChild(new Option(optText, s.id));
+                sel2.appendChild(new Option(optText, s.id));
+            });
+            if (sel2.options.length > 1) sel2.selectedIndex = 1;
+        }
+
+        function addConstraintRule() {
+            const id1 = document.getElementById('rule-student-1').value;
+            const id2 = document.getElementById('rule-student-2').value;
+            const type = document.getElementById('rule-type').value;
+
+            if (id1 === id2) { showToast("서로 다른 학생을 선택하세요.", "error"); return; }
+
+            state.constraints.push({ id: `rule_${Date.now()}`, type, studentId1: id1, studentId2: id2 });
+            renderRulesList();
+            updateStats();
+        }
+
+        function renderRulesList() {
+            const container = document.getElementById('rules-list');
+            document.getElementById('rules-count-badge').innerText = `총 ${state.constraints.length}개`;
+            container.innerHTML = '';
+
+            state.constraints.forEach(rule => {
+                const st1 = state.students.find(s => s.id === rule.studentId1);
+                const st2 = state.students.find(s => s.id === rule.studentId2);
+                if (!st1 || !st2) return;
+
+                const isPair = rule.type === 'PAIR';
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl border flex items-center justify-between text-xs ${isPair ? 'bg-indigo-50 border-indigo-200' : 'bg-rose-50 border-rose-200'}`;
+                div.innerHTML = `
+                    <div><b>${escapeHtml(st1.name)} (${st1.grade}-${st1.classNum})</b> [${isPair ? '🔗 지정' : '⚡ 분리'}] <b>${escapeHtml(st2.name)} (${st2.grade}-${st2.classNum})</b></div>
+                    <button onclick="removeConstraint('${rule.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function removeConstraint(id) {
+            state.constraints = state.constraints.filter(c => c.id !== id);
+            renderRulesList();
+            updateStats();
+        }
+
+        function selectMixMode(mode) {
+            state.mixOptions.mode = mode;
+
+            document.querySelectorAll('.mode-card').forEach(card => {
+                card.className = "mode-card relative flex p-3.5 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-200 transition-all";
+            });
+
+            const activeCard = document.getElementById(`mode-card-${mode}`);
+            if (activeCard) {
+                activeCard.className = "mode-card relative flex p-3.5 border-2 rounded-xl cursor-pointer hover:border-indigo-200 transition-all border-indigo-600 bg-indigo-50/30";
+                const radio = activeCard.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+            }
+
+            updateMixSummary();
+        }
+
+        function adjustTeamCount(d) {
+            const el = document.getElementById('input-team-count');
+            el.value = Math.max(2, Math.min(20, parseInt(el.value) + d));
+        }
+
+        function updateMixSummary() {
+            const activeCount = getFilteredStudents().filter(s => s.active).length;
+            document.getElementById('mix-summary-total').innerText = `${activeCount}명`;
+            document.getElementById('mix-summary-mode').innerText = MODE_NAMES[state.mixOptions.mode] || '도형 + 성별 복합 균형';
+            document.getElementById('mix-summary-rules').innerText = `${state.constraints.length}개`;
+        }
+
+        function switchTab(tabId) {
+            if (state.isStudentMode && (tabId === 'roster' || tabId === 'constraints' || tabId === 'mix')) {
+                return;
+            }
+
+            state.activeTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            const activeBg = state.isStudentMode ? 'bg-emerald-600 text-white shadow-sm' : 'bg-indigo-600 text-white shadow-sm';
+
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`tab-btn-${i}`);
+                if (!btn) continue;
+                const isHidden = btn.classList.contains('hidden');
+                const isSelected = (tabId === 'roster' && i === 1) || (tabId === 'constraints' && i === 2) ||
+                                   (tabId === 'mix' && i === 3) || (tabId === 'result' && i === 4) ||
+                                   (tabId === 'tournament' && i === 5);
+
+                btn.className = `${i <= 3 ? 'teacher-only ' : ''}flex-1 min-w-[120px] py-2.5 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                    isSelected ? activeBg : 'text-slate-600 hover:bg-slate-100'
+                }${isHidden ? ' hidden' : ''}`;
+            }
+
+            if (tabId === 'constraints') populateConstraintDropdowns();
+            if (tabId === 'mix') updateMixSummary();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            document.getElementById('toast-message').innerText = message;
+            icon.className = type === 'error' ? "fa-solid fa-circle-exclamation text-rose-400" : "fa-solid fa-circle-check text-emerald-400";
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function shuffle(arr) {
+            return [...arr].sort(() => Math.random() - 0.5);
+        }
+
+        function executeTeamMix() {
+            if (state.isStudentMode) return;
+            const activeStudents = getFilteredStudents().filter(s => s.active);
+            if (activeStudents.length === 0) { showToast("선택된 학급에 참석 학생이 없습니다.", "error"); return; }
+
+            const numTeams = parseInt(document.getElementById('input-team-count').value);
+            let teams = Array.from({ length: numTeams }, (_, i) => ({ id: `team_${i+1}`, name: `${i+1}팀`, members: [] }));
+            const mode = state.mixOptions.mode;
+
+            if (mode === 'PURE_RANDOM') {
+                const shuffled = shuffle(activeStudents);
+                shuffled.forEach(st => {
+                    teams.sort((a, b) => a.members.length - b.members.length);
+                    teams[0].members.push(st);
+                });
+
+            } else if (mode === 'SKILL_ONLY') {
+                ['★', '◆', '-'].forEach(sk => {
+                    const group = shuffle(activeStudents.filter(s => (sk === '-' ? (s.skill !== '★' && s.skill !== '◆') : s.skill === sk)));
+                    group.forEach(st => {
+                        teams.sort((a, b) => a.members.length - b.members.length);
+                        teams[0].members.push(st);
+                    });
+                });
+
+            } else if (mode === 'GENDER_ONLY') {
+                const males = shuffle(activeStudents.filter(s => s.gender === '남'));
+                const females = shuffle(activeStudents.filter(s => s.gender === '여'));
+                males.forEach(st => { teams.sort((a, b) => a.members.length - b.members.length); teams[0].members.push(st); });
+                females.forEach(st => { teams.sort((a, b) => a.members.length - b.members.length); teams[0].members.push(st); });
+
+            } else if (mode === 'SKILL_GENDER') {
+                const combos = ['남_★', '남_◆', '남_-', '여_★', '여_◆', '여_-'];
+                combos.forEach(combo => {
+                    const [g, sk] = combo.split('_');
+                    const group = shuffle(activeStudents.filter(s => s.gender === g && (sk === '-' ? (s.skill !== '★' && s.skill !== '◆') : s.skill === sk)));
+                    group.forEach(st => {
+                        teams.sort((a, b) => a.members.length - b.members.length);
+                        teams[0].members.push(st);
+                    });
+                });
+
+            } else if (mode === 'GENDER_SPLIT') {
+                const males = shuffle(activeStudents.filter(s => s.gender === '남'));
+                const females = shuffle(activeStudents.filter(s => s.gender === '여'));
+
+                const maleTeamCount = Math.max(1, Math.round(numTeams * (males.length / (males.length + females.length || 1))));
+                const femaleTeamCount = Math.max(1, numTeams - maleTeamCount);
+
+                teams = [];
+                for (let i = 0; i < maleTeamCount; i++) teams.push({ id: `team_m_${i+1}`, name: `${i+1}팀 (남)`, members: [] });
+                for (let i = 0; i < femaleTeamCount; i++) teams.push({ id: `team_f_${i+1}`, name: `${i+1}팀 (여)`, members: [] });
+
+                const maleTeams = teams.filter(t => t.name.includes('(남)'));
+                const femaleTeams = teams.filter(t => t.name.includes('(여)'));
+
+                males.forEach(st => { maleTeams.sort((a, b) => a.members.length - b.members.length); maleTeams[0].members.push(st); });
+                females.forEach(st => { femaleTeams.sort((a, b) => a.members.length - b.members.length); femaleTeams[0].members.push(st); });
+
+            } else if (mode === 'SKILL_GENDER_SPLIT') {
+                const males = activeStudents.filter(s => s.gender === '남');
+                const females = activeStudents.filter(s => s.gender === '여');
+
+                const maleTeamCount = Math.max(1, Math.round(numTeams * (males.length / (males.length + females.length || 1))));
+                const femaleTeamCount = Math.max(1, numTeams - maleTeamCount);
+
+                teams = [];
+                for (let i = 0; i < maleTeamCount; i++) teams.push({ id: `team_m_${i+1}`, name: `${i+1}팀 (남)`, members: [] });
+                for (let i = 0; i < femaleTeamCount; i++) teams.push({ id: `team_f_${i+1}`, name: `${i+1}팀 (여)`, members: [] });
+
+                const maleTeams = teams.filter(t => t.name.includes('(남)'));
+                const femaleTeams = teams.filter(t => t.name.includes('(여)'));
+
+                ['★', '◆', '-'].forEach(sk => {
+                    const mGroup = shuffle(males.filter(s => (sk === '-' ? (s.skill !== '★' && s.skill !== '◆') : s.skill === sk)));
+                    mGroup.forEach(st => {
+                        maleTeams.sort((a, b) => a.members.length - b.members.length);
+                        maleTeams[0].members.push(st);
+                    });
+
+                    const fGroup = shuffle(females.filter(s => (sk === '-' ? (s.skill !== '★' && s.skill !== '◆') : s.skill === sk)));
+                    fGroup.forEach(st => {
+                        femaleTeams.sort((a, b) => a.members.length - b.members.length);
+                        femaleTeams[0].members.push(st);
+                    });
+                });
+            }
+
+            state.currentTeams = teams;
+            renderTeamResults();
+            saveHistoryToSheet(teams);
+            
+            const teamNames = teams.map(t => t.name);
+            document.getElementById('tourney-team-count').value = teamNames.length;
+            switchTournamentMode('TEAM', false);
+            setTournamentBrackets([
+                { id: 'b_team', title: '팀전 토너먼트 대진표', badgeColor: 'indigo', participants: teamNames }
+            ]);
+
+            switchTab('result');
+            showToast(`[${MODE_NAMES[mode]}] 모드로 팀 생성이 완료되었습니다!`);
+        }
+
+        function renderTeamResults() {
+            const grid = document.getElementById('teams-grid');
+            grid.innerHTML = '';
+
+            if (!state.currentTeams || state.currentTeams.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">아직 생성된 팀이 없습니다.</div>`;
+                return;
+            }
+
+            state.currentTeams.forEach((team, idx) => {
+                const style = TEAM_COLORS[idx % TEAM_COLORS.length];
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl border ${style.border} shadow-sm overflow-hidden`;
+                card.innerHTML = `
+                    <div class="${style.header} px-4 py-3 text-white flex justify-between items-center">
+                        <h3 class="font-extrabold text-base">${escapeHtml(team.name)}</h3>
+                        <span class="text-xs bg-white/20 px-2.5 py-0.5 rounded-full">${team.members.length}명</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        ${team.members.map(m => `
+                            <div class="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50">
+                                <span><b>${escapeHtml(m.name)}</b> <span class="text-[10px] text-slate-400">(${m.grade}-${m.classNum})</span></span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${m.gender === '남' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}">${m.gender}</span>
+                                    ${!state.isStudentMode && m.skill === '★' ? '<span class="text-xs font-bold text-amber-500">★</span>' : ''}
+                                    ${!state.isStudentMode && m.skill === '◆' ? '<span class="text-xs font-bold text-indigo-600">◆</span>' : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 토너먼트 대진표 (팀전 / 개인전 통합 엔진)
+        // ==========================================
+
+        function switchTournamentMode(mode, autoGenerate = true) {
+            if (state.isStudentMode) return;
+            state.tournament.mode = mode;
+
+            const btnTeam = document.getElementById('btn-tourney-mode-TEAM');
+            const btnInd = document.getElementById('btn-tourney-mode-INDIVIDUAL');
+            const ctrlTeam = document.getElementById('tourney-controls-TEAM');
+            const ctrlInd = document.getElementById('tourney-controls-INDIVIDUAL');
+
+            if (mode === 'TEAM') {
+                btnTeam.className = "px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5";
+                btnInd.className = "px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5";
+                ctrlTeam.classList.remove('hidden');
+                ctrlInd.classList.add('hidden');
+                if (autoGenerate) generateTournamentFromCurrentTeams(false);
+            } else {
+                btnInd.className = "px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all bg-indigo-600 text-white shadow-sm flex items-center gap-1.5";
+                btnTeam.className = "px-4 py-1.5 text-xs font-extrabold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5";
+                ctrlInd.classList.remove('hidden');
+                ctrlTeam.classList.add('hidden');
+                if (autoGenerate) generateIndividualTournamentFromRoster('ALL', false);
+            }
+        }
+
+        function generateTournamentFromCurrentTeams(shouldSwitchTab = true) {
+            if (state.isStudentMode) return;
+            if (!state.currentTeams || state.currentTeams.length < 2) {
+                if (shouldSwitchTab) showToast("먼저 2개 이상의 팀을 생성해 주세요.", "error");
+                return;
+            }
+            const teamNames = state.currentTeams.map(t => t.name);
+            document.getElementById('tourney-team-count').value = teamNames.length;
+            document.getElementById('tournament-title-input').value = "🏆 체육수업 팀전 토너먼트 대진표";
+            switchTournamentMode('TEAM', false);
+            setTournamentBrackets([
+                { id: 'b_team', title: `팀전 토너먼트 (${teamNames.length}팀)`, badgeColor: 'indigo', participants: teamNames }
+            ]);
+            if (shouldSwitchTab) {
+                switchTab('tournament');
+                showToast(`${teamNames.length}개 팀 토너먼트 대진표가 생성되었습니다!`);
+            }
+        }
+
+        function createCustomTeamBracket() {
+            if (state.isStudentMode) return;
+            const count = Math.max(2, Math.min(16, parseInt(document.getElementById('tourney-team-count').value) || 4));
+            const teamNames = Array.from({ length: count }, (_, i) => `${i + 1}팀`);
+            document.getElementById('tournament-title-input').value = "🏆 체육수업 팀전 토너먼트 대진표";
+            setTournamentBrackets([
+                { id: 'b_team', title: `팀전 토너먼트 (${count}팀)`, badgeColor: 'indigo', participants: teamNames }
+            ]);
+            showToast(`${count}개 팀 새 대진표가 생성되었습니다.`);
+        }
+
+        function generateIndividualTournamentFromRoster(subMode = 'ALL', shouldSwitchTab = true) {
+            if (state.isStudentMode) return;
+            const activeStudents = getFilteredStudents().filter(s => s.active);
+            if (activeStudents.length < 2) {
+                showToast("개인전 대진을 만들려면 최소 2명 이상의 참석 학생이 필요합니다.", "error");
+                return;
+            }
+
+            const formatPlayerName = (s) => `${s.grade}-${s.classNum} ${s.name}`;
+
+            switchTournamentMode('INDIVIDUAL', false);
+            document.getElementById('tournament-title-input').value = "🏅 체육수업 개인전 토너먼트 대진표";
+
+            if (subMode === 'ALL') {
+                const players = shuffle(activeStudents).map(formatPlayerName);
+                setTournamentBrackets([
+                    { id: 'b_ind_all', title: `개인전 전체 대진표 (총 ${players.length}명)`, badgeColor: 'indigo', participants: players }
+                ]);
+                if (shouldSwitchTab) switchTab('tournament');
+                showToast(`선택 학급 ${players.length}명 개인전 대진표가 생성되었습니다!`);
+            } else {
+                const males = shuffle(activeStudents.filter(s => s.gender === '남')).map(formatPlayerName);
+                const females = shuffle(activeStudents.filter(s => s.gender === '여')).map(formatPlayerName);
+                const brackets = [];
+
+                if (males.length >= 2) {
+                    brackets.push({ id: 'b_ind_male', title: `👦 남학생부 개인전 (${males.length}명)`, badgeColor: 'blue', participants: males });
+                }
+                if (females.length >= 2) {
+                    brackets.push({ id: 'b_ind_female', title: `👧 여학생부 개인전 (${females.length}명)`, badgeColor: 'pink', participants: females });
+                }
+
+                if (brackets.length === 0) {
+                    showToast("남학생 또는 여학생 인원이 2명 미만입니다.", "error");
+                    return;
+                }
+
+                setTournamentBrackets(brackets);
+                if (shouldSwitchTab) switchTab('tournament');
+                showToast("남학생부 / 여학생부 개인전 대진표가 각각 생성되었습니다!");
+            }
+        }
+
+        function shuffleAllBrackets() {
+            if (state.isStudentMode || !state.tournament.brackets.length) return;
+            const updated = state.tournament.brackets.map(b => ({
+                ...b,
+                participants: shuffle(b.participants)
+            }));
+            setTournamentBrackets(updated);
+            showToast("대진 시드가 무작위로 다시 추첨되었습니다!");
+        }
+
+        function resetAllBrackets() {
+            if (state.isStudentMode || !state.tournament.brackets.length) return;
+            setTournamentBrackets(state.tournament.brackets);
+            showToast("경기 승패 기록이 초기화되었습니다.");
+        }
+
+        function setTournamentBrackets(bracketConfigs) {
+            state.tournament.brackets = bracketConfigs.map(cfg => {
+                const built = buildSingleBracket(cfg.participants);
+                return {
+                    id: cfg.id,
+                    title: cfg.title,
+                    badgeColor: cfg.badgeColor || 'indigo',
+                    participants: [...cfg.participants],
+                    rounds: built.rounds,
+                    champion: built.champion
+                };
+            });
+            renderAllTournamentBrackets();
+        }
+
+        function buildSingleBracket(participants) {
+            const n = participants.length;
+            let bracketSize = 2;
+            while (bracketSize < n) bracketSize *= 2;
+
+            const byeCount = bracketSize - n;
+            const seededSlots = [];
+            let pIdx = 0;
+
+            for (let i = 0; i < bracketSize / 2; i++) {
+                seededSlots.push(participants[pIdx++]);
+                if (i < byeCount) {
+                    seededSlots.push('BYE');
+                } else {
+                    seededSlots.push(participants[pIdx++]);
+                }
+            }
+
+            const totalRounds = Math.log2(bracketSize);
+            const rounds = [];
+
+            const round1Matches = [];
+            for (let i = 0; i < bracketSize; i += 2) {
+                const t1 = seededSlots[i];
+                const t2 = seededSlots[i + 1];
+                let winner = null;
+                if (t2 === 'BYE') winner = t1;
+                else if (t1 === 'BYE') winner = t2;
+
+                round1Matches.push({
+                    id: `r0_m${i / 2}`,
+                    team1: t1,
+                    team2: t2,
+                    winner: winner
+                });
+            }
+            rounds.push(round1Matches);
+
+            for (let r = 1; r < totalRounds; r++) {
+                const prevMatches = rounds[r - 1];
+                const currMatches = [];
+                for (let i = 0; i < prevMatches.length; i += 2) {
+                    const m1 = prevMatches[i];
+                    const m2 = prevMatches[i + 1];
+                    currMatches.push({
+                        id: `r${r}_m${i / 2}`,
+                        team1: m1.winner || null,
+                        team2: m2.winner || null,
+                        winner: null
+                    });
+                }
+                rounds.push(currMatches);
+            }
+
+            return { rounds, champion: null };
+        }
+
+        function selectBracketMatchWinner(bracketIdx, roundIdx, matchIdx, slotNum) {
+            const bracket = state.tournament.brackets[bracketIdx];
+            if (!bracket) return;
+
+            const rounds = bracket.rounds;
+            const match = rounds[roundIdx][matchIdx];
+            const selectedName = slotNum === 1 ? match.team1 : match.team2;
+
+            if (!selectedName || selectedName === 'BYE') return;
+
+            match.winner = selectedName;
+
+            if (roundIdx + 1 < rounds.length) {
+                const nextMatchIdx = Math.floor(matchIdx / 2);
+                const nextSlot = (matchIdx % 2 === 0) ? 'team1' : 'team2';
+                rounds[roundIdx + 1][nextMatchIdx][nextSlot] = selectedName;
+                rounds[roundIdx + 1][nextMatchIdx].winner = null;
+
+                for (let r = roundIdx + 2; r < rounds.length; r++) {
+                    const mIdx = Math.floor(matchIdx / Math.pow(2, r - roundIdx));
+                    const sName = (Math.floor(matchIdx / Math.pow(2, r - roundIdx - 1)) % 2 === 0) ? 'team1' : 'team2';
+                    rounds[r][mIdx][sName] = null;
+                    rounds[r][mIdx].winner = null;
+                }
+                bracket.champion = null;
+            } else {
+                bracket.champion = selectedName;
+                showToast(`🎉 [${bracket.title}] 최종 우승: ${selectedName}!`);
+            }
+
+            renderAllTournamentBrackets();
+        }
+
+        function getRoundTitle(roundIdx, totalRounds) {
+            const remaining = totalRounds - roundIdx;
+            if (remaining === 1) return '🏆 결승전';
+            if (remaining === 2) return '🔥 준결승 (4강)';
+            if (remaining === 3) return '8강전';
+            if (remaining === 4) return '16강전';
+            if (remaining === 5) return '32강전';
+            return `${roundIdx + 1}라운드`;
+        }
+
+        function renderAllTournamentBrackets() {
+            const wrapper = document.getElementById('brackets-wrapper');
+            const brackets = state.tournament.brackets;
+
+            if (!brackets || brackets.length === 0) {
+                wrapper.innerHTML = `<div class="w-full text-center py-12 text-slate-400 text-xs">대진표가 아직 생성되지 않았습니다.</div>`;
+                return;
+            }
+
+            wrapper.innerHTML = '';
+
+            brackets.forEach((bracket, bIdx) => {
+                const section = document.createElement('div');
+                section.className = 'bg-slate-50/70 border border-slate-200 rounded-2xl p-5 space-y-4';
+
+                const badgeStyles = {
+                    indigo: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                    blue: 'bg-blue-100 text-blue-800 border-blue-200',
+                    pink: 'bg-pink-100 text-pink-800 border-pink-200'
+                };
+                const badgeClass = badgeStyles[bracket.badgeColor] || badgeStyles.indigo;
+
+                const headerHtml = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/80">
+                        <span class="px-3 py-1 rounded-lg text-xs font-extrabold border ${badgeClass}">${escapeHtml(bracket.title)}</span>
+                        ${bracket.champion ? `
+                            <div class="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-900 px-3.5 py-1 rounded-xl font-extrabold text-xs shadow-sm flex items-center gap-1.5">
+                                <i class="fa-solid fa-crown text-white"></i>
+                                <span>최종 우승: <span class="underline">${escapeHtml(bracket.champion)}</span></span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                const roundsContainer = document.createElement('div');
+                roundsContainer.className = 'flex items-stretch gap-6 overflow-x-auto custom-scrollbar py-2';
+
+                const rounds = bracket.rounds;
+                const totalRounds = rounds.length;
+
+                rounds.forEach((matches, rIdx) => {
+                    const roundCol = document.createElement('div');
+                    roundCol.className = 'flex-1 min-w-[200px] flex flex-col';
+
+                    const rHeader = document.createElement('div');
+                    rHeader.className = `text-center py-1.5 px-3 rounded-xl font-extrabold text-xs mb-3 ${
+                        rIdx === totalRounds - 1 
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                        : 'bg-white text-slate-700 border border-slate-200'
+                    }`;
+                    rHeader.innerText = getRoundTitle(rIdx, totalRounds);
+                    roundCol.appendChild(rHeader);
+
+                    const matchesWrapper = document.createElement('div');
+                    matchesWrapper.className = 'flex-1 flex flex-col justify-around gap-3';
+
+                    matches.forEach((match, mIdx) => {
+                        const card = document.createElement('div');
+                        card.className = 'bg-white border-2 border-slate-200 rounded-xl p-2 shadow-sm space-y-1.5';
+
+                        const renderSlot = (name, slotNum) => {
+                            const isBye = name === 'BYE';
+                            const isWinner = match.winner && match.winner === name;
+                            const isLoser = match.winner && match.winner !== name && !isBye;
+                            const isClickable = name && !isBye;
+
+                            let slotClass = 'bg-slate-50 border border-slate-200 text-slate-700';
+                            if (isBye) slotClass = 'bg-slate-100 border border-dashed border-slate-300 text-slate-400 italic';
+                            else if (!name) slotClass = 'bg-slate-100/50 border border-slate-200 text-slate-400';
+                            else if (isWinner) slotClass = 'bg-indigo-600 border-indigo-600 text-white font-extrabold shadow-sm';
+                            else if (isLoser) slotClass = 'bg-slate-100 border-slate-200 text-slate-400 line-through opacity-70';
+                            else if (isClickable) slotClass += ' hover:border-indigo-400 hover:bg-indigo-50/50 cursor-pointer';
+
+                            return `
+                                <div ${isClickable ? `onclick="selectBracketMatchWinner(${bIdx}, ${rIdx}, ${mIdx}, ${slotNum})"` : ''} 
+                                     class="px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-all ${slotClass}">
+                                    <span class="truncate font-bold">${name ? (isBye ? '부전승 (BYE)' : escapeHtml(name)) : '대기 중...'}</span>
+                                    ${isWinner ? '<span class="text-[9px] bg-amber-400 text-slate-900 px-1.5 py-0.2 rounded font-extrabold ml-1">WIN</span>' : ''}
+                                </div>
+                            `;
+                        };
+
+                        card.innerHTML = `
+                            <div class="text-[10px] font-bold text-slate-400 flex justify-between px-1">
+                                <span>경기 ${mIdx + 1}</span>
+                                ${match.team2 === 'BYE' || match.team1 === 'BYE' ? '<span class="text-indigo-500">자동 진출</span>' : '<span>승자 클릭</span>'}
+                            </div>
+                            ${renderSlot(match.team1, 1)}
+                            ${renderSlot(match.team2, 2)}
+                        `;
+                        matchesWrapper.appendChild(card);
+                    });
+
+                    roundCol.appendChild(matchesWrapper);
+                    roundsContainer.appendChild(roundCol);
+                });
+
+                section.innerHTML = headerHtml;
+                section.appendChild(roundsContainer);
+                wrapper.appendChild(section);
+            });
+        }
+
+        // ==========================================
+        // 내보내기 및 기록 동기화 유틸리티
+        // ==========================================
+
+        function copyResultsAsText() {
+            if (state.currentTeams.length === 0) return;
+            let text = `[🏆 체육수업 팀 구성 결과]\n\n`;
+            state.currentTeams.forEach(t => {
+                text += `■ ${t.name} (${t.members.length}명)\n${t.members.map(m => `${m.name}(${m.grade}-${m.classNum}${!state.isStudentMode && m.skill === '★'?'★':!state.isStudentMode && m.skill==='◆'?'◆':''})`).join(', ')}\n\n`;
+            });
+            navigator.clipboard.writeText(text);
+            showToast("클립보드에 결과가 복사되었습니다!");
+        }
+
+        function exportToCSV() {
+            let csv = "\uFEFF팀명,이름,성별,학년,반,번호,도형\n";
+            state.currentTeams.forEach(t => {
+                t.members.forEach(m => csv += `"${t.name}","${m.name}","${m.gender}","${m.grade}","${m.classNum}","${m.studentNum}","${m.skill}"\n`);
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `체육팀구성_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+        }
+
+        function downloadAsImage(elementId, filePrefix) {
+            const target = document.getElementById(elementId);
+            if (!target) return;
+            html2canvas(target).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${filePrefix}_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function saveHistoryToSheet(teams) {
+            const histItem = {
+                id: `hist_${Date.now()}`,
+                timestamp: new Date().toLocaleString('ko-KR'),
+                teams: teams
+            };
+
+            state.history.unshift(histItem);
+            if (state.history.length > 15) state.history.pop();
+            updateHistoryBadge();
+
+            postToGoogleSheet('saveHistory', histItem);
+        }
+
+        function updateHistoryBadge() {
+            document.getElementById('history-count').innerText = state.history.length;
+        }
+
+        function toggleHistoryModal(show) {
+            if (state.isStudentMode) return;
+            document.getElementById('modal-history').classList.toggle('hidden', !show);
+            if (show) {
+                renderHistoryModalList();
+                loadSavedHistoryFromSheet();
+            }
+        }
+
+        function renderHistoryModalList() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '';
+
+            if (state.history.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">저장된 팀 생성 이전 기록이 없습니다.</div>`;
+                return;
+            }
+
+            state.history.forEach((hist) => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs";
+                const totalStudents = hist.teams.reduce((acc, t) => acc + t.members.length, 0);
+
+                div.innerHTML = `
+                    <div>
+                        <div class="font-bold text-slate-900">${hist.timestamp}</div>
+                        <div class="text-slate-500 text-[11px] mt-0.5">${hist.teams.length}개 팀 / 총 ${totalStudents}명</div>
+                    </div>
+                    <button onclick="restoreHistory('${hist.id}')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition-colors">
+                        결과 불러오기
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function restoreHistory(histId) {
+            const hist = state.history.find(h => h.id === histId);
+            if (hist) {
+                state.currentTeams = JSON.parse(JSON.stringify(hist.teams));
+                renderTeamResults();
+                
+                const teamNames = state.currentTeams.map(t => t.name);
+                document.getElementById('tourney-team-count').value = teamNames.length;
+                switchTournamentMode('TEAM', false);
+                setTournamentBrackets([
+                    { id: 'b_team', title:
